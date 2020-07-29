@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: pihole
+  name: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/hostname: pi-worker
+      volumes:
+      - name: pihole-local-etc-volume
+        persistentVolumeClaim:
+          claimName: pihole-etc-claim
+      - name: pihole-local-dnsmasq-volume
+        persistentVolumeClaim:
+          claimName: pihole-dnsmasq-claim
+      containers:
+      - image: pihole/pihole:latest
+        name: pihole
+        env:
+        - name: WEBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pihole-pass
+              key: password
+        - name: TZ
+          value: "Europe/London"
+        volumeMounts:
+        - name: pihole-local-etc-volume
+          mountPath: "/etc/pihole"
+        - name: pihole-local-dnsmasq-volume
+          mountPath: "/etc/dnsmasq.d"  
